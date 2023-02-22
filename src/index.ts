@@ -1,32 +1,47 @@
 import { Project } from "ts-morph";
+import * as path from "path";
+import { EventEmitter } from "events";
 
-const project = new Project({ tsConfigFilePath: "./tsconfig.json" });
+const listener = new EventEmitter();
 
-function extractFunctionJsDoc() {
-  const sourceFile = project.getSourceFileOrThrow("src/functional.ts");
-  const functionSymbol = sourceFile.getFunctionOrThrow("test1");
+listener.on("테스트 코드 1", () => {
+  const getPath = (filename: string) =>
+    path.resolve(__dirname, "__test__", filename);
 
-  const comment = functionSymbol.getJsDocs()[0].getComment();
+  const project = new Project({ tsConfigFilePath: "./tsconfig.json" });
 
-  console.log(comment);
-}
+  function extractFunctionJsDoc() {
+    const sourceFile = project.getSourceFileOrThrow(
+      getPath("functional.spec.ts")
+    );
+    const functionSymbol = sourceFile.getFunctionOrThrow("test1");
 
-function extractClassJsDoc() {
-  const sourceFile = project.getSourceFileOrThrow("src/classes.ts");
-  const classSymbol = sourceFile.getClassOrThrow("App");
+    const comment = functionSymbol.getJsDocs()[0].getComment();
 
-  const methods = classSymbol.getMethods();
+    console.log(comment);
+  }
 
-  const jsdoc = methods[0].getJsDocs()[0];
+  function extractClassJsDoc() {
+    const sourceFile = project.getSourceFileOrThrow(getPath("classes.spec.ts"));
+    const classSymbol = sourceFile.getClassOrThrow("App");
 
-  const comment = jsdoc.getComment();
+    const methods = classSymbol.getMethods();
 
-  console.log(comment);
+    const jsdoc = methods[0].getJsDocs()[0];
 
-  jsdoc.getTags().forEach((tag) => {
-    console.log("%s %s", tag.getTagName(), tag.getComment());
-  });
-}
+    const comment = jsdoc.getComment();
 
-extractFunctionJsDoc();
-extractClassJsDoc();
+    console.log(comment);
+
+    jsdoc.getTags().forEach((tag) => {
+      console.log("%s %s", tag.getTagName(), tag.getComment());
+    });
+  }
+
+  listener.on("함수 위 코멘트 추출", () => extractFunctionJsDoc());
+  listener.on("클래스 메소드 위 코멘트 추출", () => extractClassJsDoc());
+});
+
+listener.emit("테스트 코드 1");
+listener.emit("함수 위 코멘트 추출");
+listener.emit("클래스 메소드 위 코멘트 추출");
